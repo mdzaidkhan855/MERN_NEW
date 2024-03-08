@@ -1,6 +1,18 @@
 import express from 'express';
 const app = express();
 import dotenv from "dotenv";
+import errorMiddleware from './middlewares/error.js'
+
+
+// handle uncaught exception
+process.on('uncaughtException',(err)=>{
+    console.log(err);
+    console.log('Shutting down server due to uncaught exception');
+    process.exit(1);
+})
+
+
+
 
 dotenv.config({path:'backend/config/config.env'});
 
@@ -15,6 +27,18 @@ app.use(express.json())
 import productRoutes from './routes/products.js';
 app.use("/api/v1",productRoutes);
 
-app.listen(process.env.PORT,()=>{
+// Use error middleware at the end
+app.use(errorMiddleware);
+
+const server = app.listen(process.env.PORT,()=>{
     console.log(`Server is running at : ${process.env.PORT} in ${process.env.NODE_ENV} mode`);
+})
+
+// handle unhandled promised rejection
+process.on('unhandledRejection',(err)=>{
+    console.log(err);
+    console.log('Shutting down server due to uhhandled promise rejection');
+    server.close(()=>{
+        process.exit(1);
+    })
 })
